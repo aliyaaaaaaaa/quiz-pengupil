@@ -1,7 +1,7 @@
 <?php
     $host     = 'localhost';
-    $user     = 'root'; 
-    $password = '';                  
+    $user     = 'quiz_user'; 
+    $password = 'quiz_password';                  
     $db       = 'quiz_pengupil';
 
     $con = mysqli_connect($host, $user, $password, $db);
