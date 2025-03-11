@@ -4,6 +4,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import unittest
 
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "username"))).send_keys("invalid_user")
+
 class TestLoginRegister(unittest.TestCase):
     def setUp(self):
         options = webdriver.ChromeOptions()
