@@ -9,41 +9,35 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+     services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: quiz_pengupil
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --host=localhost --user=root --password=root"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      - name: Build PHP Docker Image
+        run: docker build -t quiz-php-app .
+
       - name: Create Docker Network
         run: docker network create quiz_network
 
-      - name: Start MySQL Container
+       - name: Import MySQL Database
         run: |
-          docker run -d --name mysql \
-            --network=quiz_network \
-            -e MYSQL_ROOT_PASSWORD=root \
-            -e MYSQL_DATABASE=quiz_pengupil \
-            -p 3306:3306 \
-            mysql:5.7
-
-      - name: Wait for MySQL to be ready
-        run: |
-          for i in {1..30}; do
-            if docker exec mysql mysqladmin ping -h localhost --silent; then
-              echo "MySQL is ready!";
-              exit 0;
-            fi
-            echo "Waiting for MySQL...";
-            sleep 2;
-          done
-          exit 1
-
-      - name: Import MySQL Database
-        run: |
-          docker cp quiz_pengupil.sql mysql:/quiz_pengupil.sql
-          docker exec mysql sh -c "mysql -u root -proot quiz_pengupil < /quiz_pengupil.sql"
-
-      - name: Build PHP Docker Image
-        run: docker build -t quiz-php-app .
+          sleep 30 # Tunggu MySQL siap
+          docker cp quiz_pengupil.sql $(docker ps -q -f name=mysql):/quiz_pengupil.sql
+          docker exec $(docker ps -q -f name=mysql) sh -c 'mysql -u root -proot quiz_pengupil < /quiz_pengupil.sql'
 
       - name: Run PHP Application
         run: |
