@@ -1,85 +1,49 @@
-name: Python Test Suite
+name: CI Test
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+on: [push, pull_request]  # Run on every push and pull request
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
-    steps:
-    - uses: actions/checkout@v2
-    
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
-    
-    - name: Setup Chrome
-      uses: browser-actions/setup-chrome@latest
-      with:
-        chrome-version: stable
-    
-    - name: Setup ChromeDriver
-      uses: nanasess/setup-chromedriver@master
-    
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install selenium pytest
-    
-    - name: Setup PHP and MySQL
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y php php-mysql mysql-server apache2
-        sudo service mysql start
-        sudo service apache2 start
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: testdb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --host=localhost --user=root --password=root"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 
-    - name: Setup Database
-      run: |
-        # Start MySQL service
-        sudo systemctl start mysql.service
-        
-        # Create database and user
-        sudo mysql -e "CREATE DATABASE IF NOT EXISTS quiz_pengupil;"
-        sudo mysql -e "CREATE USER IF NOT EXISTS 'quiz_user'@'localhost' IDENTIFIED BY 'quiz_password';"
-        sudo mysql -e "GRANT ALL PRIVILEGES ON quiz_pengupil.* TO 'quiz_user'@'localhost';"
-        sudo mysql -e "FLUSH PRIVILEGES;"
-        
-        # Import database schema
-        if [ -f quiz_pengupil.sql ]; then
-          sudo mysql quiz_pengupil < quiz_pengupil.sql
-        else
-          echo "Warning: quiz_pengupil.sql not found!"
-          exit 1
-        fi
-        
-    - name: Configure Apache
-      run: |
-        sudo cp -r . /var/www/html/quiz-pengupil-main
-        sudo chown -R www-data:www-data /var/www/html/quiz-pengupil-main
-        sudo chmod -R 755 /var/www/html/quiz-pengupil-main
-        
-        # Update database connection configuration if needed
-        if [ -f /var/www/html/quiz-pengupil-main/config/database.php ]; then
-          sudo sed -i 's/DB_USERNAME=.*/DB_USERNAME=quiz_user/' /var/www/html/quiz-pengupil-main/config/database.php
-          sudo sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=quiz_password/' /var/www/html/quiz-pengupil-main/config/database.php
-        fi
-        
-    - name: Run tests
-      run: |
-        # Start Chrome in headless mode
-        google-chrome --version
-        chromedriver --version
-        export DISPLAY=:99
-        sudo Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
-        
-        # Modify the test file to use headless mode
-        sed -i '1i from selenium.webdriver.chrome.options import Options' testing.py
-        sed -i '/self.driver = webdriver.Chrome()/c\        options = Options()\n        options.add_argument("--headless")\n        options.add_argument("--no-sandbox")\n        options.add_argument("--disable-dev-shm-usage")\n        self.driver = webdriver.Chrome(options=options)' testing.py
-        
-        # Run the tests
-        python -m pytest testing.py -v
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+
+      - name: Start PHP Server
+        run: php -S localhost:8000 -t . &
+      
+      - name: Import MySQL Database
+        run: |
+          sudo apt-get install -y mysql-client
+          mysql -h 127.0.0.1 -u root -proot testdb < database.sql
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Python Dependencies
+        run: pip install selenium unittest
+
+      - name: Run Selenium Tests
+        run: python -m unittest testing.py
