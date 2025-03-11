@@ -28,8 +28,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 INSERT INTO `users` (`id`, `name`, `username`, `email`, `password`) VALUES
 	(1, '', 'irul', 'irul@irul.com', '$2y$10$D9yc9Mt0t8niCNO9di8ejOUPib46suwHghqFnJRKQJ3Z6uwRDxfw.'),
 	(2, '', 'ahmad', 'ahmad@ahmad.com', '$2y$10$OWez2au.UMnz3yedD0BqH.bsOC374XoV9VhMigepVzLyuq2jETHs2'),
-  (3, '', 'aliya', 'nisrinaahana@gmail.com', '$2y$10$0RD8tqJyDrHGA6q9bvF/5OTlTF7r9E3aSxdDobBrEVijUr0g8w5Na'),
-  (3, '', 'aliya', 'nisrinaahana@gmail.com', '$2y$10$0RD8tqJyDrHGA6q9bvF/5OTlTF7r9E3aSxdDobBrEVijUr0g8w5Na');
+        (3, '', 'aliya', 'nisrinaahana@gmail.com', '$2y$10$0RD8tqJyDrHGA6q9bvF/5OTlTF7r9E3aSxdDobBrEVijUr0g8w5Na');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
