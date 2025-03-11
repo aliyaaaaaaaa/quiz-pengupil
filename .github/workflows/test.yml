@@ -46,6 +46,9 @@ jobs:
             -p 8000:80 \
             quiz-php-app
 
+      - name: Wait for server to start
+        run: sleep 30
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
