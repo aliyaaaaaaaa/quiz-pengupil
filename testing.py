@@ -4,8 +4,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import unittest
 
-WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "username"))).send_keys("invalid_user")
-
 class TestLoginRegister(unittest.TestCase):
     def setUp(self):
         options = webdriver.ChromeOptions()
@@ -13,6 +11,7 @@ class TestLoginRegister(unittest.TestCase):
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         self.driver = webdriver.Chrome(options=options)
+        self.driver.implicitly_wait(10)  # Set waktu tunggu default
         self.base_url = "http://localhost:8000"
         
     def test_valid_login(self):
@@ -20,7 +19,8 @@ class TestLoginRegister(unittest.TestCase):
         driver.get(f"{self.base_url}/login.php")
         
         # Input valid credentials
-        driver.find_element(By.NAME, "username").send_keys("aliya")
+        # Tunggu elemen username muncul
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "username"))).send_keys("aliya")
         driver.find_element(By.NAME, "password").send_keys("123")
         driver.find_element(By.NAME, "submit").click()
         
