@@ -11,7 +11,7 @@ class TestLoginRegister(unittest.TestCase):
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         self.driver = webdriver.Chrome(options=options)
-        self.base_url = "http://localhost/quiz-pengupil-main"
+        self.base_url = "http://localhost:8000"
         
     def test_valid_login(self):
         driver = self.driver
