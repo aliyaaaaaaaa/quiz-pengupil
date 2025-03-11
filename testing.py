@@ -6,7 +6,11 @@ import unittest
 
 class TestLoginRegister(unittest.TestCase):
     def setUp(self):
-        self.driver = webdriver.Chrome()
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        self.driver = webdriver.Chrome(options=options)
         self.base_url = "http://localhost/quiz-pengupil-main"
         
     def test_valid_login(self):
