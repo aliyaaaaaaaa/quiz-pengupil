@@ -1,5 +1,5 @@
 name: Python Test Suite
-#test
+
 on:
   push:
     branches: [ main ]
@@ -39,36 +39,6 @@ jobs:
         sudo service apache2 start
 
     - name: Setup Database
-      run: |
-        # Start MySQL service
-        sudo systemctl start mysql.service
-        
-        # Create database and user
-        sudo mysql -e "CREATE DATABASE IF NOT EXISTS quiz_pengupil;"
-        sudo mysql -e "CREATE USER IF NOT EXISTS 'quiz_user'@'localhost' IDENTIFIED BY 'quiz_password';"
-        sudo mysql -e "GRANT ALL PRIVILEGES ON quiz_pengupil.* TO 'quiz_user'@'localhost';"
-        sudo mysql -e "FLUSH PRIVILEGES;"
-        
-        # Import database schema
-        if [ -f quiz_pengupil.sql ]; then
-          sudo mysql quiz_pengupil < quiz_pengupil.sql
-        else
-          echo "Warning: quiz_pengupil.sql not found!"
-          exit 1
-        fi
-        
-    - name: Configure Apache
-      run: |
-        sudo cp -r . /var/www/html/quiz-pengupil-main
-        sudo chown -R www-data:www-data /var/www/html/quiz-pengupil-main
-        sudo chmod -R 755 /var/www/html/quiz-pengupil-main
-        
-        # Update database connection configuration if needed
-        if [ -f /var/www/html/quiz-pengupil-main/config/database.php ]; then
-          sudo sed -i 's/DB_USERNAME=.*/DB_USERNAME=quiz_user/' /var/www/html/quiz-pengupil-main/config/database.php
-          sudo sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=quiz_password/' /var/www/html/quiz-pengupil-main/config/database.php
-        fi
-           - name: Setup Database
       run: |
         # Start MySQL service
         sudo systemctl start mysql.service
