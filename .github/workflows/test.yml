@@ -1,4 +1,4 @@
-name: CI/CD Pipeline with Docker
+name: CI Pipeline with Docker
 
 on:
   push:
@@ -9,36 +9,48 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:5.7
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: quiz_pengupil
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping --host=localhost --user=root --password=root"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.1'
+      - name: Create Docker Network
+        run: docker network create quiz_network
 
-      - name: Start PHP Server
-        run: php -S localhost:8000 -t . &
+      - name: Start MySQL Container
+        run: |
+          docker run -d --name mysql \
+            --network=quiz_network \
+            -e MYSQL_ROOT_PASSWORD=root \
+            -e MYSQL_DATABASE=quiz_pengupil \
+            -p 3306:3306 \
+            mysql:5.7
+
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..30}; do
+            if docker exec mysql mysqladmin ping -h localhost --silent; then
+              echo "MySQL is ready!";
+              exit 0;
+            fi
+            echo "Waiting for MySQL...";
+            sleep 2;
+          done
+          exit 1
 
       - name: Import MySQL Database
         run: |
-          sudo apt-get install -y mysql-client
-          mysql -h 127.0.0.1 -u root -proot testdb < database.sql
+          docker cp quiz_pengupil.sql mysql:/quiz_pengupil.sql
+          docker exec mysql sh -c "mysql -u root -proot quiz_pengupil < /quiz_pengupil.sql"
+
+      - name: Build PHP Docker Image
+        run: docker build -t quiz-php-app .
+
+      - name: Run PHP Application
+        run: |
+          docker run -d --name php-app \
+            --network=quiz_network \
+            -p 8000:80 \
+            quiz-php-app
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -50,33 +62,3 @@ jobs:
 
       - name: Run Selenium Tests
         run: python -m unittest testing.py
-
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-      - name: Build Docker Image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/php-app:latest .
-
-      - name: Push Docker Image to Docker Hub
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/php-app:latest
-
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASSWORD }}
-          script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/php-app:latest
-            docker stop php-app || true
-            docker rm php-app || true
-            docker run -d --name php-app -p 80:80 ${{ secrets.DOCKER_USERNAME }}/php-app:latest
-
