@@ -9,7 +9,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-     services:
+    services:  # Indentasi harus sejajar dengan runs-on
       mysql:
         image: mysql:5.7
         env:
@@ -33,7 +33,7 @@ jobs:
       - name: Create Docker Network
         run: docker network create quiz_network
 
-       - name: Import MySQL Database
+      - name: Import MySQL Database  # Perbaiki indentasi
         run: |
           sleep 30 # Tunggu MySQL siap
           docker cp quiz_pengupil.sql $(docker ps -q -f name=mysql):/quiz_pengupil.sql
@@ -56,3 +56,4 @@ jobs:
 
       - name: Run Selenium Tests
         run: python -m unittest testing.py
+
